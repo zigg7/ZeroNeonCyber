@@ -21,6 +21,34 @@ export const ChatInterface = () => {
     mutationFn: async (content: string) => {
       await sendMessage(content);
     },
+    onMutate: async (content) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ["/api/messages"] });
+
+      // Get the current messages
+      const previousMessages = queryClient.getQueryData<Message[]>(["/api/messages"]) || [];
+
+      // Add the user's message immediately to the UI
+      const optimisticUserMessage = {
+        id: Date.now(), // Temporary ID
+        content,
+        role: "user" as const,
+        timestamp: new Date(),
+      };
+
+      queryClient.setQueryData<Message[]>(["/api/messages"], [
+        ...previousMessages,
+        optimisticUserMessage,
+      ]);
+
+      return { previousMessages };
+    },
+    onError: (_error, _variables, context) => {
+      // On error, roll back to the previous state
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["/api/messages"], context.previousMessages);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
     },
@@ -48,10 +76,19 @@ export const ChatInterface = () => {
             }`}
           >
             <div className="font-mono text-sm">
-              {message.role === "assistant" ? "ZERO>" : "USER>"} {message.content}
+              {message.role === "assistant" ? "ZERO" : "USER"} {message.content}
             </div>
           </motion.div>
         ))}
+        {mutation.isPending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-green-400 font-mono text-sm"
+          >
+            ZERO Processing neural response...
+          </motion.div>
+        )}
       </ScrollArea>
       <form onSubmit={handleSubmit} className="p-4 border-t border-purple-500/30">
         <div className="flex gap-2">
@@ -60,6 +97,7 @@ export const ChatInterface = () => {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Enter your message..."
             className="bg-black/50 border-purple-500/50 text-green-400 font-mono"
+            disabled={mutation.isPending}
           />
           <Button type="submit" disabled={mutation.isPending}>
             <Send className="h-4 w-4" />
