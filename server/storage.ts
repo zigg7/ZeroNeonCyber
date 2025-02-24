@@ -1,16 +1,34 @@
 import { messages, type Message, type InsertMessage } from "@shared/schema";
-import { db } from "./db";
+import { createClient } from '@supabase/supabase-js';
 
 export interface IStorage {
   getMessages(): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
 }
 
-export class DatabaseStorage implements IStorage {
+export class SupabaseStorage implements IStorage {
+  private supabase;
+
+  constructor() {
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_API_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables. Please ensure SUPABASE_URL and SUPABASE_API_KEY are set.');
+    }
+
+    this.supabase = createClient(supabaseUrl, supabaseKey);
+  }
+
   async getMessages(): Promise<Message[]> {
     try {
-      const result = await db.select().from(messages).orderBy(messages.timestamp);
-      return result;
+      const { data, error } = await this.supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
+
+      if (error) throw error;
+      return data as Message[];
     } catch (error) {
       console.error('Error fetching messages:', error);
       throw new Error('Failed to fetch messages');
@@ -19,15 +37,19 @@ export class DatabaseStorage implements IStorage {
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     try {
-      const [message] = await db
-        .insert(messages)
-        .values({
-          ...insertMessage,
-          timestamp: new Date(),
-        })
-        .returning();
+      const message = {
+        ...insertMessage,
+        timestamp: new Date(),
+      };
 
-      return message;
+      const { data, error } = await this.supabase
+        .from('messages')
+        .insert([message])
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data as Message;
     } catch (error) {
       console.error('Error creating message:', error);
       throw new Error('Failed to create message');
@@ -35,4 +57,4 @@ export class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+export const storage = new SupabaseStorage();
