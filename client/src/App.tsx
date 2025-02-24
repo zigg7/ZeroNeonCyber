@@ -3,7 +3,6 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./lib/queryClient";
 import { Toaster } from "@/components/ui/toaster";
 import { CRTEffect } from "@/components/CRTEffect";
-import { SoundToggle } from "@/components/SoundToggle";
 import Home from "@/pages/home";
 import Chat from "@/pages/chat";
 import NotFound from "@/pages/not-found";
@@ -22,7 +21,6 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <CRTEffect>
-        <SoundToggle />
         <Router />
         <Toaster />
       </CRTEffect>
