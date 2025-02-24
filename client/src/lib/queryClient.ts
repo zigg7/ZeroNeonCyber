@@ -12,10 +12,7 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  // Adjust the URL for production environment
-  const baseUrl = process.env.NODE_ENV === 'production' 
-    ? '/api'
-    : '';
+  const baseUrl = '/api'; // Always use /api prefix for API routes
 
   const res = await fetch(`${baseUrl}${url}`, {
     method,

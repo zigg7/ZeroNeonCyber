@@ -1,9 +1,9 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "cd client && npm run build",
   "devCommand": "npm run dev",
   "installCommand": "npm install",
-  "outputDirectory": "dist",
+  "outputDirectory": "client/dist",
   "builds": [
     {
       "src": "api/**/*.ts",
@@ -16,8 +16,15 @@
       "dest": "/api/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
+      "handle": "filesystem"
+    },
+    {
+      "src": "/assets/(.*)",
+      "dest": "/client/dist/assets/$1"
+    },
+    {
+      "src": "/.*",
+      "dest": "/client/dist/index.html"
     }
   ],
   "env": {
