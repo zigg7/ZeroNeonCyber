@@ -19,19 +19,24 @@ export class SupabaseStorage implements IStorage {
       throw new Error('Missing Supabase environment variables. Please ensure SUPABASE_URL and SUPABASE_API_KEY are set.');
     }
 
-    console.log('Initializing Supabase client with URL:', supabaseUrl); // Debug log
-    this.supabase = createClient(supabaseUrl, supabaseKey);
+    console.log('Initializing Supabase client...'); // Debug log
+    this.supabase = createClient(supabaseUrl, supabaseKey, {
+      auth: {
+        persistSession: false // Important for serverless environment
+      }
+    });
   }
 
   async getMessages(): Promise<Message[]> {
     try {
+      console.log('Fetching messages from Supabase...'); // Debug log
       const { data, error } = await this.supabase
         .from('messages')
         .select('*')
         .order('timestamp', { ascending: true });
 
       if (error) {
-        console.error('Supabase error:', error); // Debug log
+        console.error('Supabase error:', error);
         throw error;
       }
       return data as Message[];
@@ -43,6 +48,7 @@ export class SupabaseStorage implements IStorage {
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
     try {
+      console.log('Creating new message...'); // Debug log
       const message = {
         ...insertMessage,
         timestamp: new Date(),
@@ -55,7 +61,7 @@ export class SupabaseStorage implements IStorage {
         .single();
 
       if (error) {
-        console.error('Supabase error:', error); // Debug log
+        console.error('Supabase error:', error);
         throw error;
       }
       return data as Message;
@@ -67,13 +73,14 @@ export class SupabaseStorage implements IStorage {
 
   async deleteAllMessages(): Promise<void> {
     try {
+      console.log('Deleting all messages...'); // Debug log
       const { error } = await this.supabase
         .from('messages')
         .delete()
         .neq('id', 0);
 
       if (error) {
-        console.error('Supabase error:', error); // Debug log
+        console.error('Supabase error:', error);
         throw error;
       }
     } catch (error) {
