@@ -11,13 +11,15 @@ export class SupabaseStorage implements IStorage {
   private supabase;
 
   constructor() {
-    const supabaseUrl = process.env.SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_API_KEY;
+    // Get environment variables with fallback for development
+    const supabaseUrl = process.env.SUPABASE_URL || import.meta.env.VITE_SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_API_KEY || import.meta.env.VITE_SUPABASE_API_KEY;
 
     if (!supabaseUrl || !supabaseKey) {
       throw new Error('Missing Supabase environment variables. Please ensure SUPABASE_URL and SUPABASE_API_KEY are set.');
     }
 
+    console.log('Initializing Supabase client with URL:', supabaseUrl); // Debug log
     this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
@@ -28,7 +30,10 @@ export class SupabaseStorage implements IStorage {
         .select('*')
         .order('timestamp', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error); // Debug log
+        throw error;
+      }
       return data as Message[];
     } catch (error) {
       console.error('Error fetching messages:', error);
@@ -49,7 +54,10 @@ export class SupabaseStorage implements IStorage {
         .select()
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error); // Debug log
+        throw error;
+      }
       return data as Message;
     } catch (error) {
       console.error('Error creating message:', error);
@@ -62,9 +70,12 @@ export class SupabaseStorage implements IStorage {
       const { error } = await this.supabase
         .from('messages')
         .delete()
-        .neq('id', 0); // Delete all messages
+        .neq('id', 0);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error); // Debug log
+        throw error;
+      }
     } catch (error) {
       console.error('Error deleting messages:', error);
       throw new Error('Failed to delete messages');
