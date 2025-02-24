@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Send } from "lucide-react";
@@ -13,6 +13,13 @@ export const ChatInterface = () => {
   const [input, setInput] = useState("");
   const queryClient = useQueryClient();
 
+  // Clear messages when component unmounts
+  useEffect(() => {
+    return () => {
+      queryClient.removeQueries({ queryKey: ["/api/messages"] });
+    };
+  }, [queryClient]);
+
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
   });
@@ -22,15 +29,11 @@ export const ChatInterface = () => {
       await sendMessage(content);
     },
     onMutate: async (content) => {
-      // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["/api/messages"] });
-
-      // Get the current messages
       const previousMessages = queryClient.getQueryData<Message[]>(["/api/messages"]) || [];
 
-      // Add the user's message immediately to the UI
       const optimisticUserMessage = {
-        id: Date.now(), // Temporary ID
+        id: Date.now(),
         content,
         role: "user" as const,
         timestamp: new Date(),
@@ -44,7 +47,6 @@ export const ChatInterface = () => {
       return { previousMessages };
     },
     onError: (_error, _variables, context) => {
-      // On error, roll back to the previous state
       if (context?.previousMessages) {
         queryClient.setQueryData(["/api/messages"], context.previousMessages);
       }
