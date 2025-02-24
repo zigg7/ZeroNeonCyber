@@ -29,5 +29,15 @@ export async function registerRoutes(app: Express) {
     }
   });
 
+  app.delete("/api/messages", async (_req, res) => {
+    try {
+      await storage.deleteAllMessages();
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting messages:', error);
+      res.status(500).json({ error: 'Failed to delete messages' });
+    }
+  });
+
   return createServer(app);
 }

@@ -4,6 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 export interface IStorage {
   getMessages(): Promise<Message[]>;
   createMessage(message: InsertMessage): Promise<Message>;
+  deleteAllMessages(): Promise<void>;
 }
 
 export class SupabaseStorage implements IStorage {
@@ -53,6 +54,20 @@ export class SupabaseStorage implements IStorage {
     } catch (error) {
       console.error('Error creating message:', error);
       throw new Error('Failed to create message');
+    }
+  }
+
+  async deleteAllMessages(): Promise<void> {
+    try {
+      const { error } = await this.supabase
+        .from('messages')
+        .delete()
+        .neq('id', 0); // Delete all messages
+
+      if (error) throw error;
+    } catch (error) {
+      console.error('Error deleting messages:', error);
+      throw new Error('Failed to delete messages');
     }
   }
 }

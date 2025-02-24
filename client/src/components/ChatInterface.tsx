@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { sendMessage } from "@/lib/gemini";
+import { apiRequest } from "@/lib/queryClient";
 import type { Message } from "@shared/schema";
 
 export const ChatInterface = () => {
@@ -16,7 +17,13 @@ export const ChatInterface = () => {
   // Clear messages when component unmounts
   useEffect(() => {
     return () => {
-      queryClient.removeQueries({ queryKey: ["/api/messages"] });
+      // Delete all messages from the database
+      apiRequest("DELETE", "/api/messages")
+        .catch(console.error)
+        .finally(() => {
+          // Clear the query cache
+          queryClient.removeQueries({ queryKey: ["/api/messages"] });
+        });
     };
   }, [queryClient]);
 
