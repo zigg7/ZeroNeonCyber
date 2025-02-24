@@ -1,6 +1,6 @@
 # Zero: Cyberpunk AI Web Experience
 
-![Zero Banner](./assets/images/zeroai.png)
+![Zero Banner](https://github.com/zigg7/ZeroNeonCyber/blob/main/ZEROAI.png)
 
 ## Overview
 
