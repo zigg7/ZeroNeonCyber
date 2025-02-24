@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Send } from "lucide-react";
+import { Send, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,18 +14,14 @@ export const ChatInterface = () => {
   const [input, setInput] = useState("");
   const queryClient = useQueryClient();
 
-  // Clear messages when component unmounts
-  useEffect(() => {
-    return () => {
-      // Delete all messages from the database
-      apiRequest("DELETE", "/api/messages")
-        .catch(console.error)
-        .finally(() => {
-          // Clear the query cache
-          queryClient.removeQueries({ queryKey: ["/api/messages"] });
-        });
-    };
-  }, [queryClient]);
+  const clearChatMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/messages");
+    },
+    onSuccess: () => {
+      queryClient.setQueryData(["/api/messages"], []);
+    },
+  });
 
   const { data: messages = [] } = useQuery<Message[]>({
     queryKey: ["/api/messages"],
@@ -73,6 +69,18 @@ export const ChatInterface = () => {
 
   return (
     <Card className="w-full max-w-3xl mx-auto bg-black/80 border-purple-500/50">
+      <div className="p-4 border-b border-purple-500/30 flex justify-between items-center">
+        <h2 className="text-green-400 font-mono">Neural Interface Terminal</h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => clearChatMutation.mutate()}
+          disabled={clearChatMutation.isPending || messages.length === 0}
+          className="text-red-400 hover:text-red-300"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
       <ScrollArea className="h-[500px] p-4">
         {messages.map((message, i) => (
           <motion.div
