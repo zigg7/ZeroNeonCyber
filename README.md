@@ -1,6 +1,6 @@
 # Zero: Cyberpunk AI Web Experience
 
-![Zero Banner](./assets/images/ZEROAI.png)
+![Zero Banner](./assets/images/zeroai.png)
 
 ## Overview
 
