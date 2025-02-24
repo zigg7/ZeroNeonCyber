@@ -5,18 +5,28 @@ import { insertMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express) {
   app.get("/api/messages", async (_req, res) => {
-    const messages = await storage.getMessages();
-    res.json(messages);
+    try {
+      const messages = await storage.getMessages();
+      res.json(messages);
+    } catch (error) {
+      console.error('Error getting messages:', error);
+      res.status(500).json({ error: 'Failed to fetch messages' });
+    }
   });
 
   app.post("/api/messages", async (req, res) => {
-    const result = insertMessageSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
-    }
+    try {
+      const result = insertMessageSchema.safeParse(req.body);
+      if (!result.success) {
+        return res.status(400).json({ error: result.error });
+      }
 
-    const message = await storage.createMessage(result.data);
-    res.json(message);
+      const message = await storage.createMessage(result.data);
+      res.json(message);
+    } catch (error) {
+      console.error('Error creating message:', error);
+      res.status(500).json({ error: 'Failed to create message' });
+    }
   });
 
   return createServer(app);

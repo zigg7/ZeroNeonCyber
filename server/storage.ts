@@ -10,41 +10,61 @@ export class SupabaseStorage implements IStorage {
   private supabase;
 
   constructor() {
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_API_KEY) {
-      throw new Error('Missing Supabase environment variables');
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_API_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      throw new Error('Missing Supabase environment variables. Please ensure SUPABASE_URL and SUPABASE_API_KEY are set.');
     }
 
-    this.supabase = createClient(
-      process.env.SUPABASE_URL,
-      process.env.SUPABASE_API_KEY
-    );
+    this.supabase = createClient(supabaseUrl, supabaseKey);
   }
 
   async getMessages(): Promise<Message[]> {
-    const { data, error } = await this.supabase
-      .from('messages')
-      .select('*')
-      .order('timestamp', { ascending: true });
+    try {
+      const { data, error } = await this.supabase
+        .from('messages')
+        .select('*')
+        .order('timestamp', { ascending: true });
 
-    if (error) throw error;
-    return data as Message[];
+      if (error) throw error;
+      return data as Message[];
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      throw new Error('Failed to fetch messages');
+    }
   }
 
   async createMessage(insertMessage: InsertMessage): Promise<Message> {
-    const message = {
-      ...insertMessage,
-      timestamp: new Date(),
-    };
+    try {
+      const message = {
+        ...insertMessage,
+        timestamp: new Date(),
+      };
 
-    const { data, error } = await this.supabase
-      .from('messages')
-      .insert([message])
-      .select()
-      .single();
+      const { data, error } = await this.supabase
+        .from('messages')
+        .insert([message])
+        .select()
+        .single();
 
-    if (error) throw error;
-    return data as Message;
+      if (error) throw error;
+      return data as Message;
+    } catch (error) {
+      console.error('Error creating message:', error);
+      throw new Error('Failed to create message');
+    }
   }
 }
 
-export const storage = new SupabaseStorage();
+// Only initialize storage if environment variables are available
+let storage: IStorage;
+
+try {
+  storage = new SupabaseStorage();
+} catch (error) {
+  console.error('Failed to initialize Supabase storage:', error);
+  throw error;
+}
+
+export { storage };
